@@ -111,26 +111,49 @@ router.get('/:module/:version/tarball', function(req, res, next) {
     var tag = req.param('version');
 
     //https://api.github.com/repos/<user>/<repo>/tarball/<tag | commitsh>'
-    
+
     // TODO: Change this to gitlab url
     // http://gitlab.eirenerx.com/<user>/<repo>/repository/archive.tar.gz?ref=<tag>
 
     var tarball_url = gitlab_uri + '/repos/' + user + '/' + repo + '/tarball/' + tag;
 
-    debug('proxy tarball', tarball_url);
+    gitlab.tags(user, repo, {
+      token: req.oauth_token
+    }, function(err, tags) {
+      if (err) {
+        return next(new Error('Invalid package'))
+      }
 
-    var options = {
-        url: tarball_url,
-        headers: {
-            'User-Agent': 'npm-github-proxy',
+      if (!tags.length) {
+        return next(new Error('Invalid tag'))
+      }
+
+      var len = tags.length
+      var tarball_url
+      for (var i=0; i<len; i++) {
+        var tag_ = tags[i]
+        debug('match tag %s to %j', tag, tag_)
+        if (tag_.name === tag) {
+          tarball_url = tag_.tarball_url
+          break
         }
-    };
+      }
 
-    if (req.oauth_token) {
-        options.headers['Authorization'] = 'token ' + req.oauth_token
-    }
+      debug('proxy tarball', tarball_url);
 
-    request(options).pipe(res);
+      var options = {
+          uri: tarball_url,
+          headers: {
+              'User-Agent': 'npm-github-proxy',
+          }
+      };
+
+      if (req.oauth_token) {
+          options.headers['PRIVATE-TOKEN'] = req.oauth_token
+      }
+
+      request(options).pipe(res);
+    })
 });
 
 module.exports = router;
