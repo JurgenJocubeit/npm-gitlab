@@ -29,6 +29,11 @@ app.use(function(req, res, next) {
     next();
 });
 
+app.use(function(req, res, next) {
+  debug('%s: %s', req.method, req.url)
+  next()
+})
+
 app.use(router);
 
 // if not already handled, it is a 404
