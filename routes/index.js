@@ -64,7 +64,7 @@ router.get('/:module', function(req, res, next) {
       gitlab.file(user, repo, tag.name, opt, req.curry(function(package) {
         cb(null, {
           name: name
-        , _id: name
+        , _id: name + '@' + version
         , version: version
         , shasum: shasum
         , tarball: tag.tarball_url
@@ -86,7 +86,7 @@ router.get('/:module', function(req, res, next) {
       sha_tags.forEach(function(tag) {
         map[tag.version] = {
           name: spec.name
-        , _id: spec.name
+        , _id: tag._id
         , version: tag.version
         , dependencies: tag.package.dependencies
         , devDependencies: tag.package.devDependencies
